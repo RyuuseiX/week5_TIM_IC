@@ -53,13 +53,13 @@ UART_HandleTypeDef huart2;
 
 //12 P/R , Gear reduction 1 : 64
 //DMA Buffer
-uint16_t capturedata[CAPTURENUM] = { 0 };
+uint32_t capturedata[CAPTURENUM] = { 0 };
 //diff time of capture data
 int32_t DiffTime[CAPTURENUM-1] = { 0 };
 //Mean difftime
 float MeanTime = 0;
 float Resolution = 12;  //Pulse per Round
-float Module = 1/64;
+float Module = 64;
 float RPM = 0;
 uint32_t HalfPeriod = 100000;  //5Hz
 
@@ -134,7 +134,7 @@ int main(void)
 	while (1) {
 		//read Time of encoder
 		encoderSpeedReaderCycle();
-		RPM = Module*60*(10^6)/(float)(MeanTime*Resolution);
+		RPM = (60*1000000/(MeanTime*Resolution))/64;
 		if(micros5()-timestamp > HalfPeriod)
 		{
 			timestamp = micros5();
@@ -415,14 +415,15 @@ void encoderSpeedReaderCycle() {
 		//time never go back, but timer can over flow , conpensate that
 		if (DiffTime[i] <0)
 		{
-			DiffTime[i]+=65535;
+			DiffTime[i]+=4294967295;
 		}
 		//Sum all 15 Diff
 		sum += DiffTime[i];
 	}
 
 	//mean all 15 Diff
-	MeanTime = sum / (float)(CAPTURENUM-1);
+	MeanTime = sum / (float)(CAPTURENUM-1);  //per pulse
+
 
 }
 
